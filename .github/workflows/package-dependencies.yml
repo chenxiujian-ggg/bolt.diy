@@ -20,8 +20,7 @@ jobs:
       # 2. 安装 pnpm（版本 9）
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
+
 
       # 3. 安装 Node.js 22.18.0 并缓存 pnpm store
       - name: Setup Node.js 22.18.0

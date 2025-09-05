@@ -1,4 +1,4 @@
-name: Build and Package Dependencies (pnpm new3)
+name: Build and Package Dependencies (pnpm new4)
 
 # 触发方式：手动 / 推送到 main / PR
 on:
@@ -32,9 +32,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # 5. 把 lockfile 中所有 tarball（含 GitHub -hosted）拉进 store
-      - name: Fetch all tarballs for offline
-        run: pnpm install --offline=false --frozen-lockfile
+      # 5. 把缺失的 git-hosted tarball 手动收进 store
+      - name: Fetch missing git tarball
+        run: |
+          curl -L -o electron-node-gyp.tgz \
+            https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2
+          pnpm store add electron-node-gyp.tgz
 
       # 6. 打包：node_modules + store 一起归档
       - name: Archive node_modules & store

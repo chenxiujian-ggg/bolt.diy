@@ -1,0 +1,55 @@
+name: Build and Package Dependencies (pnpm new)
+# 触发方式：手动 / 推送到 main / PR
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出源码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 安装 pnpm（版本 9）
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      # 3. 安装 Node.js 22.18.0 并缓存 pnpm store
+      - name: Setup Node.js 20.18.3
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.3'
+          cache: 'pnpm'   # 自动缓存 ~/.local/share/pnpm/store
+
+      # 4. 安装依赖（严格按 lock 文件）
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5. 预拉取易缺失的“配置依赖”到 store
+      - name: Pre-fetch missing configurational deps
+        run: |
+          # 单独把离线安装时容易缺失的包拉进 store
+          pnpm store add @ai-sdk/amazon-bedrock@1.0.6
+          # 若项目还有其它 AI SDK 依赖，可一次性全部预拉取
+          # pnpm store add $(jq -r '.dependencies | keys[] | select(startswith("@ai-sdk/"))' package.json)
+
+      # 6. 打包：node_modules + store 一起归档
+      - name: Archive node_modules & store
+        run: |
+          tar -czf pnpm-offline.tar.gz \
+            node_modules/ \
+            ~/.local/share/pnpm/store/
+
+      # 7. 上传为 Actions Artifact（保留 30 天）
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node_modules-linux-pnpm
+          path: pnpm-offline.tar.gz
+          retention-days: 30

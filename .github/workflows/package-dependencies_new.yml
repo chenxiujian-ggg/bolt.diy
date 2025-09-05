@@ -37,7 +37,7 @@ jobs:
         run: |
           curl -L -o electron-node-gyp.tgz \
             https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2
-          pnpm store add electron-node-gyp.tgz
+          pnpm store add ./electron-node-gyp.tgz   # ← 前面加 ./ 表示本地文件
 
       # 6. 打包：node_modules + store 一起归档
       - name: Archive node_modules & store

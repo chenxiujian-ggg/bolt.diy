@@ -1,4 +1,5 @@
-name: Build and Package Dependencies (pnpm new2)
+name: Build and Package Dependencies (pnpm new3)
+
 # 触发方式：手动 / 推送到 main / PR
 on:
   workflow_dispatch:
@@ -21,27 +22,19 @@ jobs:
         uses: pnpm/action-setup@v4
 
       # 3. 安装 Node.js 22.18.0 并缓存 pnpm store
-      - name: Setup Node.js 20.18.3
+      - name: Setup Node.js 22.18.0
         uses: actions/setup-node@v4
         with:
-          node-version: '20.18.3'
+          node-version: '22.18.0'
           cache: 'pnpm'   # 自动缓存 ~/.local/share/pnpm/store
 
       # 4. 安装依赖（严格按 lock 文件）
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        
-      # 5. 把 lock 里所有 tarball 一次性收进 store（关键）
-      - name: Pre-fetch all tarballs for offline
-        run: pnpm fetch --lockfile-only        # ← 新增这一行
 
-      # 5. 预拉取易缺失的“配置依赖”到 store
-      - name: Pre-fetch missing configurational deps
-        run: |
-          # 单独把离线安装时容易缺失的包拉进 store
-          pnpm store add @ai-sdk/amazon-bedrock@1.0.6
-          # 若项目还有其它 AI SDK 依赖，可一次性全部预拉取
-          # pnpm store add $(jq -r '.dependencies | keys[] | select(startswith("@ai-sdk/"))' package.json)
+      # 5. 把 lockfile 中所有 tarball（含 GitHub -hosted）拉进 store
+      - name: Fetch all tarballs for offline
+        run: pnpm install --offline=false --frozen-lockfile
 
       # 6. 打包：node_modules + store 一起归档
       - name: Archive node_modules & store

@@ -1,0 +1,34 @@
+name: Build and Package Dependencies (pnpm new5)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.3'
+          cache: 'pnpm'
+
+      # 1. 常规安装（生成 node_modules）
+      - run: pnpm install --frozen-lockfile
+
+      # 2. 关键：强制重新抓取 git-hosted 依赖，确保 store 里出现 git-sha 版本
+      - run: pnpm install --force --frozen-lockfile
+
+      # 3. 打包：node_modules + 完整 store
+      - run: tar -czf pnpm-offline.tar.gz node_modules/ ~/.local/share/pnpm/store/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: node_modules-linux-pnpm
+          path: pnpm-offline.tar.gz
+          retention-days: 30

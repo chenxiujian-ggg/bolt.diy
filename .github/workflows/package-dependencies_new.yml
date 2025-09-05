@@ -1,4 +1,4 @@
-name: Build and Package Dependencies (pnpm new)
+name: Build and Package Dependencies (pnpm new2)
 # 触发方式：手动 / 推送到 main / PR
 on:
   workflow_dispatch:
@@ -30,6 +30,10 @@ jobs:
       # 4. 安装依赖（严格按 lock 文件）
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        
+      # 5. 把 lock 里所有 tarball 一次性收进 store（关键）
+      - name: Pre-fetch all tarballs for offline
+        run: pnpm fetch --lockfile-only        # ← 新增这一行
 
       # 5. 预拉取易缺失的“配置依赖”到 store
       - name: Pre-fetch missing configurational deps
